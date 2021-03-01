@@ -1,0 +1,63 @@
+
+function csv_delete_rows($filename=NULL, $startrow=0, $endrow=0, $inner=true) {
+      $status = 0;
+      //check if file exists
+      if (file_exists($filename)) {
+          //end execution for invalid startrow or endrow
+          if ($startrow < 0 || $endrow < 0 || $startrow > 0 && $endrow > 0 && $startrow > $endrow) {
+              die('Invalid startrow or endrow value');
+          }
+          $updatedcsv = array();
+          $count = 0;
+          //open file to read contents
+          $fp = fopen($filename, "r");
+          //loop to read through csv contents
+          while ($csvcontents = fgetcsv($fp)) {
+              $count++;
+              if ($startrow > 0 && $endrow > 0) {
+                  //delete rows inside startrow and endrow
+                  if ($inner) {
+                      $status = 1;
+                      if ($count >= $startrow && $count <= $endrow)
+                          continue;
+                      array_push($updatedcsv, implode(',', $csvcontents));
+                  }
+                  //delete rows outside startrow and endrow
+                  else {
+                      $status = 2;
+                      if ($count < $startrow || $count > $endrow)
+                          continue;
+                      array_push($updatedcsv, implode(',', $csvcontents));
+                  }
+              }
+              else if ($startrow == 0 && $endrow > 0) {
+                  $status = 3;
+                  if ($count <= $endrow)
+                      continue;
+                  array_push($updatedcsv, implode(',', $csvcontents));
+              }
+              else if ($endrow == 0 && $startrow > 0) {
+                  $status = 4;
+                  if ($count >= $startrow)
+                      continue;
+                  array_push($updatedcsv, implode(',', $csvcontents));
+              }
+              else if ($startrow == 0 && $endrow == 0) {
+                  $status = 5;
+              } else {
+                  $status = 6;
+              }
+          }//end while
+          if ($status < 5) {
+              $finalcsvfile = implode("\n", $updatedcsv);
+              fclose($fp);
+              $fp = fopen($filename, "w");
+              fwrite($fp, $finalcsvfile);
+          }
+          fclose($fp);
+          return $status;
+      } else {
+          die('File does not exist');
+      }
+      }
+  
